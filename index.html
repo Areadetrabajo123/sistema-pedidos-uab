@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema de Pedidos UAB</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <header class="app-header">
+      <h1>📦 Gestión de Pedidos UAB</h1>
+      <p>Consolidación automática + Selección inteligente</p>
+      <button id="freqBtn" class="btn btn-secondary small-btn">📈 Productos Frecuentes</button>
+    </header>
+
+    <div class="app-grid">
+      <section class="table-section">
+        <div class="card">
+          <div class="upload-area" id="dropZone">
+            <label for="fileInput" class="upload-label">
+              <span class="upload-icon">📂</span>
+              <span class="upload-text">Arrastra archivos Excel aquí o <strong>haz clic para seleccionar</strong></span>
+              <span class="upload-hint">Soporta múltiples archivos (.xlsx, .xls)</span>
+            </label>
+            <input type="file" id="fileInput" accept=".xlsx,.xls" multiple hidden>
+          </div>
+          <p id="fileStatus" class="status-text">Ningún archivo seleccionado</p>
+        </div>
+
+        <div id="daysSelector" class="card hidden">
+          <h3>📅 Días a Procesar</h3>
+          <div id="daysCheckboxes" class="days-grid"></div>
+          <button id="calcBtn" class="btn btn-primary">⚙️ Calcular Consolidado</button>
+        </div>
+
+        <div id="resultsSection" class="card hidden">
+          <div class="table-header">
+            <h3>📋 Productos Disponibles</h3>
+            <label class="select-all-label">
+              <input type="checkbox" id="selectAll"> Seleccionar todo
+            </label>
+          </div>
+          <div class="table-wrapper">
+            <table id="resultsTable">
+              <thead>
+                <tr>
+                  <th class="check-col"></th>
+                  <th>Producto</th>
+                  <th class="num">Cantidad</th>
+                  <th>Unidad</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <aside class="order-section">
+        <div class="card order-panel">
+          <h3>🛒 Lista de Pedido</h3>
+          <p class="order-hint">Marca los productos para agregarlos aquí</p>
+          <div class="order-table-wrapper">
+            <table id="orderTable">
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th class="num">Cantidad</th>
+                  <th>Unidad</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="empty-state" id="emptyOrder">
+            <span class="empty-icon">📦</span>
+            <p>Ningún producto seleccionado aún</p>
+          </div>
+          <div class="order-footer hidden" id="orderFooter">
+            <button id="exportBtn" class="btn btn-success">📥 Exportar Selección</button>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- Modal Productos Frecuentes -->
+  <div id="freqModal" class="modal hidden">
+    <div class="modal-content freq-modal">
+      <div class="modal-header">
+        <h3>📈 Historial de Productos Más Usados</h3>
+        <button id="closeFreqModal" class="btn-close">×</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-desc">Se actualiza automáticamente cada vez que exportas un pedido. Acumulado localmente en este navegador.</p>
+        <div class="freq-table-wrapper">
+          <table id="freqTable">
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th>Unidad</th>
+                <th class="num">Solicitudes</th>
+                <th class="num">Cant. Acumulada</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="empty-state" id="emptyFreq">Aún no hay historial registrado.</div>
+      </div>
+      <div class="modal-footer freq-footer">
+        <button id="clearFreqBtn" class="btn btn-secondary small-btn">🗑️ Limpiar Historial</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
