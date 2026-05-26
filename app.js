@@ -7,7 +7,7 @@ const fileInput = document.getElementById('fileInput');
 const fileStatus = document.getElementById('fileStatus');
 const daysSelector = document.getElementById('daysSelector');
 const daysCheckboxes = document.getElementById('daysCheckboxes');
-const calcBtn = document.getElementById('calcBtn');
+const calcBtn = document.getElementById('calcBtn'); // Ya no es estrictamente necesario, pero lo dejamos
 const resultsSection = document.getElementById('resultsSection');
 const resultsTableBody = document.querySelector('#resultsTable tbody');
 const selectAll = document.getElementById('selectAll');
@@ -22,12 +22,12 @@ const clearFreqBtn = document.getElementById('clearFreqBtn');
 const freqTableBody = document.querySelector('#freqTable tbody');
 const emptyFreq = document.getElementById('emptyFreq');
 
-// Utilidad: Formato Título (Primera letra mayúscula por palabra)
+// Utilidad: Formato Título
 function toTitleCase(str) {
   return String(str).toLowerCase().replace(/(?:^|\s)\S/g, a => a.toUpperCase());
 }
 
-// NUEVO: Función para limpiar decimales (14.00 -> 14, 14.50 -> 14.5)
+// Función para limpiar decimales
 function formatQty(val) {
   if (val === undefined || val === null || isNaN(val)) return '0';
   const num = parseFloat(val);
@@ -64,6 +64,7 @@ function finalizeLoad(files) {
   orderFooter.classList.add('hidden');
 }
 
+// 2. Días con actualización en tiempo real
 function populateDays() {
   daysCheckboxes.innerHTML = '';
   const days = new Set();
@@ -72,26 +73,25 @@ function populateDays() {
   [...days].sort((a,b) => (order.indexOf(a)+1) - (order.indexOf(b)+1) || a.localeCompare(b)).forEach(day => {
     daysCheckboxes.innerHTML += `<div><input type="checkbox" id="day-${day}" value="${day}" checked><label for="day-${day}">${day}</label></div>`;
   });
+
+  // Listener reactivo para cambios en los días
+  daysCheckboxes.addEventListener('change', () => {
+    const selectedDays = [...document.querySelectorAll('#daysCheckboxes input:checked')].map(c => c.value);
+    if (selectedDays.length === 0) {
+      resultsSection.classList.add('hidden');
+      aggregatedData = [];
+      return;
+    }
+    // Recalcular y redibujar automáticamente
+    calculate(selectedDays);
+    renderTable();
+    resultsSection.classList.remove('hidden');
+  });
 }
 
-calcBtn.addEventListener('click', () => {
-  const selected = [...document.querySelectorAll('#daysCheckboxes input:checked')].map(c => c.value);
-  if (!selected.length) return alert('Selecciona al menos un día.');
-  calcBtn.disabled = true; calcBtn.textContent = '⏳ Procesando...';
-  setTimeout(() => { 
-    calculate(selected); 
-    renderTable(); 
-    resultsSection.classList.remove('hidden'); 
-    calcBtn.disabled = false; calcBtn.textContent = '⚙️ Calcular Consolidado'; 
-  }, 100);
-});
-
-function normalize(str) { return String(str).trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " "); }
-
-// 2. Cálculo y correcciones
+// 3. Cálculo y correcciones
 function calculate(selectedDays) {
-  aggregatedData = [];
-  selectedKeys.clear();
+  // No borramos aggregatedData hasta el final para evitar parpadeos, pero sí preparamos el nuevo mapa
   const map = {};
   const footerKw = ['recibi', 'entregue', 'encargado', 'vo bo', 'chef', 'nutricion', 'shirley', 'fecha'];
 
@@ -132,18 +132,30 @@ function calculate(selectedDays) {
     });
   });
 
+  // Actualizamos datos globales
   aggregatedData = Object.values(map).sort((a,b) => a.product.localeCompare(b.product, 'es'));
+  
+  // Limpiamos selecciones huérfanas (productos que ya no están en los días seleccionados)
+  const currentKeys = new Set(aggregatedData.map(i => `${normalize(i.product)}|${normalize(i.unit)}`));
+  selectedKeys.forEach(k => {
+    if (!currentKeys.has(k)) selectedKeys.delete(k);
+  });
 }
 
-// 3. Renderizado de tabla principal (Con formato limpio de cantidad)
+function normalize(str) { return String(str).trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/\s+/g, " "); }
+
+// 4. Renderizado de tabla principal (Preserva selecciones)
 function renderTable() {
   resultsTableBody.innerHTML = '';
-  selectAll.checked = false;
+  selectAll.checked = aggregatedData.length > 0 && aggregatedData.every(item => selectedKeys.has(`${normalize(item.product)}|${normalize(item.unit)}`));
+  
   aggregatedData.forEach(item => {
     const key = `${normalize(item.product)}|${normalize(item.unit)}`;
+    const isChecked = selectedKeys.has(key); // Mantiene el estado previo
+    
     const tr = document.createElement('tr');
     tr.innerHTML = `
-      <td class="check-col"><input type="checkbox" data-key="${key}"></td>
+      <td class="check-col"><input type="checkbox" data-key="${key}" ${isChecked ? 'checked' : ''}></td>
       <td>${toTitleCase(item.product)}</td>
       <td class="num">${formatQty(item.qty)}</td>
       <td>${item.unit}</td>
@@ -156,9 +168,13 @@ function renderTable() {
       const key = e.target.dataset.key;
       if (selectedKeys.has(key)) selectedKeys.delete(key); else selectedKeys.add(key);
       updateOrderPanel();
+      
+      // Actualizar checkbox "Seleccionar todo"
+      selectAll.checked = aggregatedData.every(item => selectedKeys.has(`${normalize(item.product)}|${normalize(item.unit)}`));
     }
   });
 
+  selectAll.onchange = null; // Limpiar listeners antiguos
   selectAll.addEventListener('change', () => {
     const checkboxes = resultsTableBody.querySelectorAll('input[type="checkbox"]');
     checkboxes.forEach(cb => {
@@ -168,9 +184,12 @@ function renderTable() {
     });
     updateOrderPanel();
   });
+  
+  // Actualizar panel lateral por si cambiaron cantidades de items seleccionados
+  updateOrderPanel();
 }
 
-// 4. Panel de Pedido (Con formato limpio de cantidad)
+// 5. Panel de Pedido
 function updateOrderPanel() {
   orderTableBody.innerHTML = '';
   if (selectedKeys.size === 0) {
@@ -181,16 +200,17 @@ function updateOrderPanel() {
   emptyOrder.classList.add('hidden');
   orderFooter.classList.remove('hidden');
 
-  aggregatedData.forEach(item => {
-    const key = `${normalize(item.product)}|${normalize(item.unit)}`;
-    if (!selectedKeys.has(key)) return;
+  // Ordenar panel igual que la tabla principal para consistencia
+  const sortedSelected = aggregatedData.filter(item => selectedKeys.has(`${normalize(item.product)}|${normalize(item.unit)}`));
+
+  sortedSelected.forEach(item => {
     const tr = document.createElement('tr');
     tr.innerHTML = `<td>${toTitleCase(item.product)}</td><td class="num">${formatQty(item.qty)}</td><td>${item.unit}</td>`;
     orderTableBody.appendChild(tr);
   });
 }
 
-// 5. Historial / Frecuencia (localStorage)
+// 6. Historial / Frecuencia (localStorage)
 function getFreqData() { return JSON.parse(localStorage.getItem(FREQ_KEY) || '{}'); }
 function saveFreqData(data) { localStorage.setItem(FREQ_KEY, JSON.stringify(data)); }
 
@@ -234,7 +254,7 @@ clearFreqBtn.addEventListener('click', () => {
   }
 });
 
-// 6. Exportación con formato solicitado y cantidades limpias
+// 7. Exportación
 exportBtn.addEventListener('click', () => {
   if (selectedKeys.size === 0) return alert('Selecciona al menos un producto.');
   updateFrequencyHistory();
@@ -247,7 +267,7 @@ exportBtn.addEventListener('click', () => {
     data.push({
       "Items": counter++,
       "Producto": toTitleCase(item.product),
-      "Cantidad Solicitada": formatQty(item.qty), // Ahora exporta 14 en vez de 14.00
+      "Cantidad Solicitada": formatQty(item.qty),
       "Costo": "",
       "Especificaciones": ""
     });
