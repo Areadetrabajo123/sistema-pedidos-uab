@@ -13,7 +13,10 @@
     <header class="app-header">
       <h1>📦 Gestión de Pedidos UAB</h1>
       <p>Consolidación automática + Selección inteligente</p>
-      <button id="freqBtn" class="btn btn-secondary small-btn">📈 Productos Frecuentes</button>
+      <div class="header-buttons">
+        <button id="stockBtn" class="btn btn-secondary small-btn">📦 Gestionar Stock</button>
+        <button id="freqBtn" class="btn btn-secondary small-btn">📈 Productos Frecuentes</button>
+      </div>
     </header>
 
     <div class="app-grid">
@@ -38,10 +41,14 @@
 
         <div id="resultsSection" class="card hidden">
           <div class="table-header">
-            <h3>📋 Productos Disponibles</h3>
-            <label class="select-all-label">
-              <input type="checkbox" id="selectAll"> Seleccionar todo
-            </label>
+            <h3>📋 Productos Disponibles (Sin Stock)</h3>
+            <div class="header-actions">
+              <input type="text" id="searchInput" placeholder="🔍 Buscar producto..." class="search-input">
+              <label class="select-all-label">
+                <input type="checkbox" id="selectAll"> Seleccionar todo
+              </label>
+              <button id="refreshBtn" class="btn btn-secondary small-btn">🔄 Limpiar Selección</button>
+            </div>
           </div>
           <div class="table-wrapper">
             <table id="resultsTable">
@@ -56,6 +63,7 @@
               <tbody></tbody>
             </table>
           </div>
+          <p id="searchResults" class="search-info hidden"></p>
         </div>
       </section>
 
@@ -87,7 +95,44 @@
     </div>
   </div>
 
-  <!-- Modal Productos Frecuentes -->
+  <!-- Modal Stock -->
+  <div id="stockModal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>📦 Productos en Stock</h3>
+        <button id="closeStockModal" class="btn-close">×</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-desc">Agrega productos que ya tienes en almacén. Estos se ocultarán automáticamente del consolidado principal.</p>
+        <div class="stock-form">
+          <input type="text" id="stockProduct" placeholder="Producto (ej: Arroz)" autocomplete="off">
+          <input type="text" id="stockUnit" placeholder="Unidad (ej: KG)">
+          <input type="number" id="stockQty" placeholder="Cantidad" min="0" step="0.1">
+          <button id="addStockBtn" class="btn btn-primary small-btn">➕ Agregar</button>
+        </div>
+        <div class="stock-table-wrapper">
+          <table id="stockTable">
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th>Unidad</th>
+                <th class="num">Cantidad</th>
+                <th class="action-col"></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="empty-state" id="emptyStock">No hay productos en stock registrados.</div>
+      </div>
+      <div class="modal-footer">
+        <button id="clearStockBtn" class="btn btn-secondary small-btn">🗑️ Limpiar Todo</button>
+        <span class="stock-count" id="stockCount">0 productos</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Frecuencias -->
   <div id="freqModal" class="modal hidden">
     <div class="modal-content freq-modal">
       <div class="modal-header">
@@ -95,7 +140,7 @@
         <button id="closeFreqModal" class="btn-close">×</button>
       </div>
       <div class="modal-body">
-        <p class="modal-desc">Se actualiza automáticamente cada vez que exportas un pedido. Acumulado localmente en este navegador.</p>
+        <p class="modal-desc">Se actualiza automáticamente cada vez que exportas un pedido.</p>
         <div class="freq-table-wrapper">
           <table id="freqTable">
             <thead>
