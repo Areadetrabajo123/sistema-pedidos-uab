@@ -3,16 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistema de Pedidos UAB</title>
+  <title>Sistema de Gestión de Pedidos UAB</title>
   <link rel="stylesheet" href="style.css">
   <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
   <div class="app-container">
+    
     <header class="app-header">
-      <h1>📦 Gestión de Pedidos UAB</h1>
-      <p>Consolidación automática + Selección inteligente</p>
+      <div class="header-brand">
+        <div class="brand-icon">UAB</div>
+        <div>
+          <h1>Sistema de Gestión de Pedidos</h1>
+          <p>Universidad Adventista de Bolivia | Servicio de Alimentación</p>
+        </div>
+      </div>
       <div class="header-buttons">
         <button id="stockBtn" class="btn btn-secondary small-btn">📦 Gestionar Stock</button>
         <button id="freqBtn" class="btn btn-secondary small-btn">📈 Productos Frecuentes</button>
